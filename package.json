@@ -1,0 +1,10 @@
+{
+  "name": "visitor-pass-management-system",
+  "private": true,
+  "scripts": {
+    "dev:backend": "npm run dev --prefix backend",
+    "seed:backend": "npm run seed --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build:frontend": "npm run build --prefix frontend"
+  }
+}
