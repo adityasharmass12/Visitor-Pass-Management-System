@@ -1,64 +1,58 @@
-import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
-import { useAuth } from './context/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
-import LoginPage from './pages/LoginPage';
-import VisitorRegisterPage from './pages/VisitorRegisterPage';
-import AdminDashboard from './pages/AdminDashboard';
-import SecurityDashboard from './pages/SecurityDashboard';
-import HostDashboard from './pages/HostDashboard';
-import VisitorDashboard from './pages/VisitorDashboard';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, AuthContext } from './context/AuthContext';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import SecurityScan from './pages/SecurityScan';
+import VisitorRegister from './pages/VisitorRegister';
 
-const HomeRedirect = () => {
-  const { user } = useAuth();
+import Header from './components/Header';
 
-  if (!user) return <Navigate to="/login" replace />;
-  if (user.role === 'Admin') return <Navigate to="/admin" replace />;
-  if (user.role === 'Security') return <Navigate to="/security" replace />;
-  if (user.role === 'Employee') return <Navigate to="/host" replace />;
-  return <Navigate to="/visitor" replace />;
+const PrivateRoute = ({ children, roles }) => {
+  const { user, loading } = React.useContext(AuthContext);
+
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/login" />;
+  if (roles && !roles.includes(user.role)) return <Navigate to="/dashboard" />;
+
+  return children;
 };
 
-const App = () => {
+function App() {
   return (
-    <Routes>
-      <Route path="/" element={<HomeRedirect />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/visitor-register" element={<VisitorRegisterPage />} />
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute roles={['Admin']}>
-            <AdminDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/security"
-        element={
-          <ProtectedRoute roles={['Admin', 'Security']}>
-            <SecurityDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/host"
-        element={
-          <ProtectedRoute roles={['Admin', 'Employee']}>
-            <HostDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/visitor"
-        element={
-          <ProtectedRoute roles={['Visitor']}>
-            <VisitorDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <AuthProvider>
+      <Router>
+        <div className="app-container">
+          <Header />
+          <main className="container" style={{ padding: '2rem 1rem' }}>
+            <Routes>
+              <Route path="/" element={<Navigate to="/login" />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register-visitor" element={<VisitorRegister />} />
+              
+              <Route 
+                path="/dashboard" 
+                element={
+                  <PrivateRoute>
+                    <Dashboard />
+                  </PrivateRoute>
+                } 
+              />
+              
+              <Route 
+                path="/scan" 
+                element={
+                  <PrivateRoute roles={['Admin', 'Security']}>
+                    <SecurityScan />
+                  </PrivateRoute>
+                } 
+              />
+            </Routes>
+          </main>
+        </div>
+      </Router>
+    </AuthProvider>
   );
-};
+}
 
 export default App;

@@ -1,35 +1,37 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
+import api from '../api';
 
-const AuthContext = createContext(null);
+export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem('vp-user');
-    return stored ? JSON.parse(stored) : null;
-  });
-  const [token, setToken] = useState(() => localStorage.getItem('vp-token') || '');
+  const [user, setUser]       = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) localStorage.setItem('vp-user', JSON.stringify(user));
-    else localStorage.removeItem('vp-user');
-  }, [user]);
+    const stored = localStorage.getItem('user');
+    if (stored) setUser(JSON.parse(stored));
+    setLoading(false);
+  }, []);
 
-  useEffect(() => {
-    if (token) localStorage.setItem('vp-token', token);
-    else localStorage.removeItem('vp-token');
-  }, [token]);
-
-  const login = ({ user: nextUser, token: nextToken }) => {
-    setUser(nextUser);
-    setToken(nextToken);
+  const login = async (email, password) => {
+    try {
+      const { data } = await api.post('/auth/login', { email, password });
+      setUser(data);
+      localStorage.setItem('user', JSON.stringify(data));
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || 'Login failed' };
+    }
   };
 
   const logout = () => {
     setUser(null);
-    setToken('');
+    localStorage.removeItem('user');
   };
 
-  return <AuthContext.Provider value={{ user, token, login, logout }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
-
-export const useAuth = () => useContext(AuthContext);
