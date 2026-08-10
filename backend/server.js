@@ -12,11 +12,11 @@ import appointmentRoutes from './routes/appointmentRoutes.js';
 import passRoutes from './routes/passRoutes.js';
 import checkLogRoutes from './routes/checkLogRoutes.js';
 
-dotenv.config();
-connectDB();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, '.env') });
+connectDB();
 
 const app = express();
 
@@ -42,11 +42,13 @@ app.get('/', (req, res) => {
   res.send('Visitor Pass Management API is running...');
 });
 
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Only listen locally — Vercel handles this in serverless mode
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
 
 // Export for Vercel serverless
 export default app;
